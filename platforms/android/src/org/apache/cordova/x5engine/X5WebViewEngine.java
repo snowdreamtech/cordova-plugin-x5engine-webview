@@ -29,11 +29,11 @@ import android.content.pm.ApplicationInfo;
 import android.os.Build;
 import android.util.Log;
 import android.view.View;
-import android.webkit.ValueCallback;
 
 import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebSettings.LayoutAlgorithm;
 import com.tencent.smtt.sdk.WebView;
+import com.tencent.smtt.sdk.ValueCallback;
 
 import org.apache.cordova.CordovaBridge;
 import org.apache.cordova.CordovaInterface;
