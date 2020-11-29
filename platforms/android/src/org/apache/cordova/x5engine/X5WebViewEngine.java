@@ -29,11 +29,11 @@ import android.content.pm.ApplicationInfo;
 import android.os.Build;
 import android.util.Log;
 import android.view.View;
+import android.webkit.ValueCallback;
 
 import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebSettings.LayoutAlgorithm;
 import com.tencent.smtt.sdk.WebView;
-import com.tencent.smtt.sdk.ValueCallback;
 
 import org.apache.cordova.CordovaBridge;
 import org.apache.cordova.CordovaInterface;
@@ -339,9 +339,21 @@ public class X5WebViewEngine implements CordovaWebViewEngine {
 
     @Override
     void evaluateJavascript(String js, ValueCallback<String> callback) {
+        if(callback == null)
+            webView.evaluateJavascript(js,null);
+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             // sdk>19
-            webView.evaluateJavascript(js, callback);
+            final ValueCallback<String> proxyCallback = callback;
+            com.tencent.smtt.sdk.ValueCallback mCallback = new com.tencent.smtt.sdk.ValueCallback() {
+                @Override
+                public void onReceiveValue(Object o) {
+                    if(o instanceof String)
+                        proxyCallback.onReceiveValue((String) o);
+                }
+            };
+
+            webView.evaluateJavascript(js, mCallback);
         } else {
             // SDK <= 19
             webView.loadUrl(js);
