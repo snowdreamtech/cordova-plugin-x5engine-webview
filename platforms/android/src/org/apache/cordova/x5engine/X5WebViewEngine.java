@@ -19,10 +19,17 @@
 
 package org.apache.cordova.x5engine;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
-import javax.swing.text.View;
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
+import android.os.Build;
+import android.util.Log;
+import android.view.View;
+import android.webkit.ValueCallback;
 
 import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebSettings.LayoutAlgorithm;
@@ -38,14 +45,8 @@ import org.apache.cordova.ICordovaCookieManager;
 import org.apache.cordova.NativeToJsMessageQueue;
 import org.apache.cordova.PluginManager;
 
-import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
-import android.content.BroadcastReceiver;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
-import android.os.Build;
-import android.webkit.ValueCallback;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 /**
  * Glue class between CordovaWebView (main Cordova logic) and SystemWebView (the
