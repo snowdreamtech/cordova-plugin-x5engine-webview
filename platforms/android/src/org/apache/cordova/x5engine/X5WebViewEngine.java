@@ -338,7 +338,7 @@ public class X5WebViewEngine implements CordovaWebViewEngine {
     }
 
     @Override
-    void evaluateJavascript(String js, ValueCallback<String> callback) {
+    public void evaluateJavascript(String js, ValueCallback<String> callback) {
         if(callback == null)
             webView.evaluateJavascript(js,null);
 
