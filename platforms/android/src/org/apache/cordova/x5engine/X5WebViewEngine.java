@@ -19,16 +19,11 @@
 
 package org.apache.cordova.x5engine;
 
-import android.annotation.SuppressLint;
-import android.annotation.TargetApi;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.pm.ApplicationInfo;
-import android.os.Build;
-import android.util.Log;
-import android.view.View;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+
+import javax.swing.text.View;
+
 import com.tencent.smtt.sdk.WebSettings;
 import com.tencent.smtt.sdk.WebSettings.LayoutAlgorithm;
 import com.tencent.smtt.sdk.WebView;
@@ -43,17 +38,23 @@ import org.apache.cordova.ICordovaCookieManager;
 import org.apache.cordova.NativeToJsMessageQueue;
 import org.apache.cordova.PluginManager;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-
+import android.annotation.SuppressLint;
+import android.annotation.TargetApi;
+import android.content.BroadcastReceiver;
+import android.content.Intent;
+import android.content.IntentFilter;
+import android.content.pm.ApplicationInfo;
+import android.os.Build;
+import android.webkit.ValueCallback;
 
 /**
- * Glue class between CordovaWebView (main Cordova logic) and SystemWebView (the actual View).
- * We make the Engine separate from the actual View so that:
- *  A) We don't need to worry about WebView methods clashing with CordovaWebViewEngine methods
- *     (e.g.: goBack() is void for WebView, and boolean for CordovaWebViewEngine)
- *  B) Separating the actual View from the Engine makes API surfaces smaller.
- * Class uses two-phase initialization. However, CordovaWebView is responsible for calling .init().
+ * Glue class between CordovaWebView (main Cordova logic) and SystemWebView (the
+ * actual View). We make the Engine separate from the actual View so that: A) We
+ * don't need to worry about WebView methods clashing with CordovaWebViewEngine
+ * methods (e.g.: goBack() is void for WebView, and boolean for
+ * CordovaWebViewEngine) B) Separating the actual View from the Engine makes API
+ * surfaces smaller. Class uses two-phase initialization. However,
+ * CordovaWebView is responsible for calling .init().
  */
 public class X5WebViewEngine implements CordovaWebViewEngine {
     public static final String TAG = "X5WebViewEngine";
@@ -87,8 +88,8 @@ public class X5WebViewEngine implements CordovaWebViewEngine {
 
     @Override
     public void init(CordovaWebView parentWebView, CordovaInterface cordova, Client client,
-              CordovaResourceApi resourceApi, PluginManager pluginManager,
-              NativeToJsMessageQueue nativeToJsMessageQueue) {
+            CordovaResourceApi resourceApi, PluginManager pluginManager,
+            NativeToJsMessageQueue nativeToJsMessageQueue) {
         if (this.cordova != null) {
             throw new IllegalStateException();
         }
@@ -106,16 +107,18 @@ public class X5WebViewEngine implements CordovaWebViewEngine {
 
         initWebViewSettings();
 
-        nativeToJsMessageQueue.addBridgeMode(new NativeToJsMessageQueue.OnlineEventsBridgeMode(new NativeToJsMessageQueue.OnlineEventsBridgeMode.OnlineEventsBridgeModeDelegate() {
-            @Override
-            public void setNetworkAvailable(boolean value) {
-                webView.setNetworkAvailable(value);
-            }
-            @Override
-            public void runOnUiThread(Runnable r) {
-                X5WebViewEngine.this.cordova.getActivity().runOnUiThread(r);
-            }
-        }));
+        nativeToJsMessageQueue.addBridgeMode(new NativeToJsMessageQueue.OnlineEventsBridgeMode(
+                new NativeToJsMessageQueue.OnlineEventsBridgeMode.OnlineEventsBridgeModeDelegate() {
+                    @Override
+                    public void setNetworkAvailable(boolean value) {
+                        webView.setNetworkAvailable(value);
+                    }
+
+                    @Override
+                    public void runOnUiThread(Runnable r) {
+                        X5WebViewEngine.this.cordova.getActivity().runOnUiThread(r);
+                    }
+                }));
         bridge = new CordovaBridge(pluginManager, nativeToJsMessageQueue);
         exposeJsInterface(webView, bridge);
     }
@@ -135,7 +138,7 @@ public class X5WebViewEngine implements CordovaWebViewEngine {
         return webView;
     }
 
-    @SuppressLint({"NewApi", "SetJavaScriptEnabled"})
+    @SuppressLint({ "NewApi", "SetJavaScriptEnabled" })
     @SuppressWarnings("deprecation")
     private void initWebViewSettings() {
         webView.setInitialScale(0);
@@ -146,15 +149,14 @@ public class X5WebViewEngine implements CordovaWebViewEngine {
         settings.setJavaScriptCanOpenWindowsAutomatically(true);
         settings.setLayoutAlgorithm(LayoutAlgorithm.NORMAL);
 
-        // Set the nav dump for HTC 2.x devices (disabling for ICS, deprecated entirely for Jellybean 4.2)
+        // Set the nav dump for HTC 2.x devices (disabling for ICS, deprecated entirely
+        // for Jellybean 4.2)
         try {
-            Method gingerbread_getMethod =  WebSettings.class.getMethod("setNavDump", new Class[] { boolean.class });
+            Method gingerbread_getMethod = WebSettings.class.getMethod("setNavDump", new Class[] { boolean.class });
 
             String manufacturer = Build.MANUFACTURER;
             Log.d(TAG, "CordovaWebView is running on device made by: " + manufacturer);
-            if(Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB &&
-                    Build.MANUFACTURER.contains("HTC"))
-            {
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB && Build.MANUFACTURER.contains("HTC")) {
                 gingerbread_getMethod.invoke(settings, true);
             }
         } catch (NoSuchMethodException e) {
@@ -167,11 +169,12 @@ public class X5WebViewEngine implements CordovaWebViewEngine {
             Log.d(TAG, "This should never happen: InvocationTargetException means this isn't Android anymore.");
         }
 
-        //We don't save any form data in the application
+        // We don't save any form data in the application
         settings.setSaveFormData(false);
         settings.setSavePassword(false);
 
-        // Jellybean rightfully tried to lock this down. Too bad they didn't give us a whitelist
+        // Jellybean rightfully tried to lock this down. Too bad they didn't give us a
+        // whitelist
         // while we do this
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
             settings.setAllowUniversalAccessFromFileURLs(true);
@@ -180,16 +183,17 @@ public class X5WebViewEngine implements CordovaWebViewEngine {
             settings.setMediaPlaybackRequiresUserGesture(false);
         }
         // Enable database
-        // We keep this disabled because we use or shim to get around DOM_EXCEPTION_ERROR_16
-        String databasePath = webView.getContext().getApplicationContext().getDir("database", Context.MODE_PRIVATE).getPath();
+        // We keep this disabled because we use or shim to get around
+        // DOM_EXCEPTION_ERROR_16
+        String databasePath = webView.getContext().getApplicationContext().getDir("database", Context.MODE_PRIVATE)
+                .getPath();
         settings.setDatabaseEnabled(true);
         settings.setDatabasePath(databasePath);
 
-
-        //Determine whether we're in debug or release mode, and turn on Debugging!
+        // Determine whether we're in debug or release mode, and turn on Debugging!
         ApplicationInfo appInfo = webView.getContext().getApplicationContext().getApplicationInfo();
-        if ((appInfo.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0 &&
-            Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+        if ((appInfo.flags & ApplicationInfo.FLAG_DEBUGGABLE) != 0
+                && Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
             enableRemoteDebugging();
         }
 
@@ -259,7 +263,6 @@ public class X5WebViewEngine implements CordovaWebViewEngine {
         webView.addJavascriptInterface(exposedJsApi, "_cordovaNative");
     }
 
-
     /**
      * Load the url into the webview.
      */
@@ -294,14 +297,15 @@ public class X5WebViewEngine implements CordovaWebViewEngine {
     }
 
     /**
-     * Go to previous page in history.  (We manage our own history)
+     * Go to previous page in history. (We manage our own history)
      *
      * @return true if we went back, false if we are already at top
      */
     @Override
     public boolean goBack() {
         // Check webview first to see if there is a history
-        // This is needed to support curPage#diffLink, since they are added to parentEngine's history, but not our history url array (JQMobile behavior)
+        // This is needed to support curPage#diffLink, since they are added to
+        // parentEngine's history, but not our history url array (JQMobile behavior)
         if (webView.canGoBack()) {
             webView.goBack();
             return true;
@@ -329,6 +333,17 @@ public class X5WebViewEngine implements CordovaWebViewEngine {
             } catch (Exception e) {
                 Log.e(TAG, "Error unregistering configuration receiver: " + e.getMessage(), e);
             }
+        }
+    }
+
+    @Override
+    void evaluateJavascript(String js, ValueCallback<String> callback) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            // sdk>19
+            webView.evaluateJavascript(js, callback);
+        } else {
+            // SDK <= 19
+            webView.loadUrl(js);
         }
     }
 }
